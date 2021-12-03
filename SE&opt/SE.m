@@ -6,12 +6,14 @@ B = 64 ;
 N = L * B;
 M =fix( L * log2(B) / R);         
 
-rep_times = 80;
-SNRdB = [11:0.1:13];
+rep_times = 8;
+SNRdB = [1.5:0.1:4];
 v_n = (10.^(SNRdB/10)).^(-1);
 v_x = 1;
 
-CR = [-300,-30:30,300];
+CR = [-300,-30:30,300]; 
+% Highly recommend use as much different thresholds as possible.
+% Usually more than 20 is acceptable.
 
 lambda = 10.^(CR/20);
 
@@ -32,8 +34,8 @@ MSE_ext_output = zeros(length(lambda),length(rho_pri),length(v_n));
 % rng('default'); 
 
 %% Quantization
-for k = 1:rep_times
-    k
+parfor k = 1:rep_times
+%     k
     lambda = 10.^(CR/20);
     MSE_ext = zeros(length(lambda),length(rho_pri),length(v_n));
     v_ext = zeros(length(lambda),length(rho_pri),length(v_n));
@@ -88,6 +90,7 @@ for k = 1:rep_times
     v_pos_output = v_pos_output + v_pos / rep_times;
     v_ext_output = v_ext_output + v_ext / rep_times;
     MSE_ext_output = MSE_ext_output + MSE_ext / rep_times;
+k
 end
 
 %% plot
