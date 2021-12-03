@@ -1,3 +1,10 @@
+%% Irregular Clipped Sparse Regression Codes
+% find details at 
+% https://arxiv.org/pdf/2106.01573.pdf
+%
+%                   --by Li Wencong 
+%                              2021
+%%
 clc; close all; clear;
 % rng(43,'twister')
 rng('shuffle')
@@ -7,7 +14,7 @@ CR =[-20:20];
 SNRdB = ones(1,length(CR)) ;
 
 
-alpha = ones(1,length(SNRdB));
+% alpha = ones(1,length(SNRdB));
 
 max_noise_order = [1:length(SNRdB)];
 % max_noise_order is using to choose which SNRs would be run. A longer step
@@ -31,8 +38,7 @@ clip_out_final_c = cell(1,length(max_noise_order));
 clip_pos_final_c = cell(1,length(max_noise_order));
 N_in_final_c = cell(1,length(max_noise_order));
 N_out_final_c = cell(1,length(max_noise_order));
-a2=zeros(31,0);
-a2(15)=1;
+
 for h = 1:length(max_noise_order)
 h
 
@@ -40,7 +46,7 @@ h
 B = 64;                     %length of block
 L = 2048;                  %number of blocks
 N = B*L;                   %length of whole message 
-R = 1;                 %information rate
+R = 0.5;                 %information rate
 M = fix(L * log2(B) / R) ;       %legnth of sent message
 rate = M/N;
 dec_x = zeros(N,1);
@@ -63,7 +69,6 @@ SNRdB_tem = SNRdB(max_noise_order(h));
 v_n = (10.^(SNRdB_tem/10)).^(-1);      % variance of noise
 sigma = sqrt(v_n);
 
-% CR = [-22, -20, -15, -13, -10, -5, -2, 0, 1, 3, 5, 6, 10, 20, 30];        %clipping ratio
 lambda = 10.^(CR/20);
    
 
@@ -152,23 +157,9 @@ for i = 1:length(numN)
     N_index{i} = ind;
 end
 
-%% test
-%  for i = 1:length(num)
-%      a{i} = union( N_index{i},index_cr{i});
-%  end
-% b=[];
-%  for i = 1:length(num)
-%     b = union(b,a{i});
-%  end
-% a2 = intersect(N_index{1},N_index{2});
-
 %%
 full_clip_x = clip_res(full_x_dct,iN,lambda(h));  
 clip_x = full_clip_x(i_dct);
-% a = [];
-% for i = 1:length(index_cr)
-%     a = [a,index_cr{i}];
-% end
 
 %% channel noise and norm
 [y,v_neq] = channel_noise(clip_x,v_n,iM,B);
@@ -211,25 +202,6 @@ u_ext_tem = zeros(N,length(iN));
 last_v_ext = 10;
 last_v_ite = 10;
     for j=1:N_ite_floor 
-
-    %% clip test
-        % de-clip for every different CR
-%         
-%         
-%         for i = 1:length(index_cr)
-%             index_lambda = index_cr{i};
-%             y_in = y(M_index{i},:);
-%             [u_pos_clip_test(M_index{i},:), v_pos_clip_tem(i,:) ] = Z_APP_Clip(lambda(num(i)), y_in, u_ite_test(index_lambda,:), v_ite_test(j,:), v_neq(i));  
-%             [u_ext_tem(:,i),v_ext_tem(i,:)]  = ext(N,length4N(num(i)),u_ite_test, v_ite_test(j,:),u_pos_clip_test(M_index{i},:),v_pos_clip_tem(i,:),[],index_lambda,N_index{i});
-%         end
-% 
-% 
-%         v_ext_test(j,:) = alphe_9(num)' * v_ext_tem;
-%         u_ext_test = sum(u_ext_tem,2);
-% 
-%         
-%         MSE_clip_test(j,:) = mean((u_pos_clip_test - x_dct).^2);
-        
             %%  clip
 
                 for i = 1:length(iN)
@@ -241,40 +213,15 @@ last_v_ite = 10;
                 % average the variance of each CR
 
                 v_pos_clip(j,:) = var_average(length4M(numN),v_pos_clip_tem); 
-        %                 v_pos_clip(j,:) = max(v_pos_clip(j,:),1e-7);
-                if j==19
-                     ssss=1;
-                end
+                v_pos_clip(j,:) = max(v_pos_clip(j,:),1e-7);
+
                         last = last_v_ext;
                         [u_ext,last_v_ext]  = external_information(u_ite, v_ite(j,:),u_pos_clip,v_pos_clip(j,:),i_dct);
                         v_ext(j,:) = last_v_ext;
-        %                 if v_ext(j,:)>last
-        %                     v_ext(j,:) = v_ext(j-1,:);
-        %                     last_v_ext = last;
-        %                 end
 
                         MSE_clip(j,:) = mean((u_pos_clip - x_dct).^2);
-                        if isnan(v_pos_clip(j,:))
-                            assss=1;
-                end
+                       
 
-    %% NLD test
-%         u_ext_test = idct(u_ext_test);
-% 
-%         
-%         [u_pos_N_test, v_pos_N_test(j,:),decision_test] = NLD_LOOP(u_ext_test,v_ext_test(j,:),B,N);  
-%         v_pos_N_test(j,:) = max(v_pos_N_test(j,:),1e-06);
-%         [u_ite_test,v_ite_test(j + 1,:)]  = external_information(u_ext_test, v_ext_test(j,:),u_pos_N_test,v_pos_N_test(j,:));
-% 
-%         u_ite_test = dct(u_ite_test);
-%         MSE_N_test(j,:) = mean((u_pos_N_test - x).^2);
-%         a_tem = ((0:L-1)'*B+data - decision_test);
-%         SER_N_test(j,:) = SER_N_test(j,:) + length(find(a_tem ~= 0));
-%         
-% 
-%         if v_pos_N(j,:) <= 1e-5
-%           break
-%         end
  %% NLD
                 u_ext = D .* idct(u_ext);
 
@@ -303,11 +250,6 @@ v_final = v_final + v_pos_N/rep_times;
 u_final = u_final + u_pos_N/rep_times;
 MSE_final = MSE_final + MSE_N/rep_times;
 SER_final = SER_final + SER_N/rep_times;
-% 
-% v_final_test = v_final_test + v_pos_N_test/rep_times;
-% u_final_test = u_final_test + u_pos_N_test/rep_times;
-% MSE_final_test = MSE_final_test + MSE_N_test/rep_times;
-% SER_final_test = SER_final_test + SER_N_test/rep_times;
 
 clip_in_final = clip_in_final + v_ite(1:end-1,:)/rep_times;
 clip_out_final = clip_out_final + v_ext/rep_times;
@@ -320,12 +262,6 @@ u_final_c{h} = u_final;
 MSE_final_c{h} = MSE_final;
 SER_final_c{h} = SER_final/L;
 
-% v_final_c_test{h} = v_final_test;
-% u_final_c_test{h} = u_final_test;
-% MSE_final_c_test{h} = MSE_final_test;
-% SER_final_c_test{h} = SER_final_test/L;
-
-
 clip_in_final_c{h} = clip_in_final;
 clip_out_final_c{h} = clip_out_final;
 clip_pos_final_c{h} = clip_pos_final;
@@ -334,34 +270,24 @@ N_out_final_c{h} = N_out_final;
 end
 save test.mat
 %% plot
-% load opt_clip_data_12
-minv = zeros(length(max_noise_order),1);
-minMSE = zeros(length(max_noise_order),1);
-minSER = zeros(length(max_noise_order),1);
-for i = 1:length(max_noise_order)
-    v_tem = v_final_c{i};
-    [minv_tem,ind_tem] = mink(v_tem,5);
-    minv(i) = mean(minv_tem);
-    MSE_tem = MSE_final_c{i};
-    minMSE(i) = mean(MSE_tem(ind_tem));
-    SER_tem = SER_final_c{i};
-    minSER(i) = mean(mink(SER_tem,5));
-end
-a= [1,4,6:9,11,12];
-semilogy(SNRdB(a),minSER(a),'r.-','LineWidth',2,'MarkerSize',25)
-xlim([0,5])
-ylim([1e-5,1])
-% MSE_final = max(MSE_final,1e-6);
-% SER_final = max(SER_final_c{1},1e-6);
-% 
-%     figure
-%     semilogy([1:N_ite_floor],v_final','LineWidth',2)
-%     hold on
-%     semilogy([1:N_ite_floor],MSE_final','*')
-%     semilogy([1:N_ite_floor],SER_final','s')
-%     xlabel('iteration times')
-%     ylabel('MSE')
-%     legend('v','MSE','SER')
+% % % load opt_clip_data_12
+% minv = zeros(length(max_noise_order),1);
+% minMSE = zeros(length(max_noise_order),1);
+% minSER = zeros(length(max_noise_order),1);
+% for i = 1:length(max_noise_order)
+%     v_tem = v_final_c{i};
+%     [minv_tem,ind_tem] = mink(v_tem,5);
+%     minv(i) = mean(minv_tem);
+%     MSE_tem = MSE_final_c{i};
+%     minMSE(i) = mean(MSE_tem(ind_tem));
+%     SER_tem = SER_final_c{i};
+%     minSER(i) = mean(mink(SER_tem,5));
+% end
+% a= [1,4,6:9,11,12];
+% semilogy(SNRdB(a),minSER(a),'r.-','LineWidth',2,'MarkerSize',25)
+% xlim([0,5])
+% ylim([1e-5,1])
+
     
 
 function [x_dct,index,x,D]= enc(data,B,L,M)
